@@ -30,7 +30,7 @@ def encrypt_int(message: int, key_size: int = 2048, key: Tuple[int, int, int] | 
     
     return encrypted, decrypt_key
 
-def decrypt_int(encrypted_message: int, decrypt_key: Tuple[int, int, int]) -> int:
+def decrypt_int(encrypted_message: int, key: Tuple[int, int, int]) -> int:
     """
     Decrypt an RSA-encrypted message.
     
@@ -41,13 +41,13 @@ def decrypt_int(encrypted_message: int, decrypt_key: Tuple[int, int, int]) -> in
     Returns:
         The decrypted integer
     """
-    n, e, d = decrypt_key
+    n, e, d = key
     decrypted = pow(encrypted_message, d, n)
     return decrypted
 
-def multiply_encrypted(enc_a: int, enc_b: int, decrypt_key: Tuple[int, int, int]) -> int:
+def multiply_encrypted(enc_a: int, enc_b: int, key: Tuple[int, int, int]) -> int:
     """
     Multiply two RSA-encrypted integers.
     """
-    n, e, d = decrypt_key
+    n, e, d = key
     return (enc_a * enc_b) % n

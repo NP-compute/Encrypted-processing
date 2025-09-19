@@ -1,4 +1,4 @@
-from src.generate_data import generate_adding_data, generate_adding_constant, decompose_adding_data
+from src.generate_data import generate_adding_data,  decompose_adding_data
 from src.rsa import encrypt_int, decrypt_int, multiply_encrypted
 
 def test_generate_adding():
@@ -6,7 +6,7 @@ def test_generate_adding():
     data_size = 3
     increment_value = 2
     wrapped_data, data_pointer, data_size = generate_adding_data(unencrypted_data, data_size)
-    wrapped_operation, data_pointer2, data_size2 = generate_adding_constant(increment_value, data_size)
+    wrapped_operation, data_pointer2, data_size2 = generate_adding_data(increment_value, data_size)
     
     assert data_pointer == data_pointer2, "Data pointers do not match"
     assert data_size == data_size2, "Data sizes do not match"
@@ -24,7 +24,7 @@ def test_decompose_adding():
     data_size = 4
     increment_value = 3
     wrapped_data, data_pointer, data_size = generate_adding_data(unencrypted_data, data_size)
-    wrapped_operation, data_pointer2, data_size2 = generate_adding_constant(increment_value, data_size)
+    wrapped_operation, data_pointer2, data_size2 = generate_adding_data(increment_value, data_size)
     
     assert data_pointer == data_pointer2, "Data pointers do not match"
     assert data_size == data_size2, "Data sizes do not match"
@@ -46,7 +46,7 @@ def test_integration():
     data_size = 4
     increment_value = 5
     wrapped_data, data_pointer, data_size = generate_adding_data(unencrypted_data, data_size)
-    wrapped_operation, data_pointer2, data_size2 = generate_adding_constant(increment_value, data_size)
+    wrapped_operation, data_pointer2, data_size2 = generate_adding_data(increment_value, data_size)
     
     assert data_pointer == data_pointer2, "Data pointers do not match"
     assert data_size == data_size2, "Data sizes do not match"
