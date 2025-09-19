@@ -25,10 +25,10 @@ def generate_adding(unencrypted_data: int, data_size: int, increment_value: int)
     # It contains the data and allows the addition property
     wrapped_data: int = unencrypted_data
     wrapped_data = wrapped_data << data_size
-    wrapped_data = wrapped_data | increment_value
+    wrapped_data += 1
 
     # This is the UNENCRPTED operation
-    wrapped_operation: int = (1 << data_size) + 1
+    wrapped_operation: int = (increment_value << data_size) + 1
 
     # This is the pointer to the data
     # NOTE: This is zero indexed, I want to differentiate between size and pointer for later operations
