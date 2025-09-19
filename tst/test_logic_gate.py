@@ -87,8 +87,46 @@ def test_three_NANDS():
     assert output_pointer2.get_value() == 1, f'Expected 1 but got {output_pointer2.get_value()}'
     assert output_pointer3.get_value() == 1, f'Expected 1 but got {output_pointer3.get_value()}'
 
+def test_NAND_into_NAND():
+    data_a = data()
+    data_b = data()
+    output = data()
+
+    # Make a pointer we can set
+    pointer_b1 = data_b.generate_pointer()
+
+    # Build the NAND gate
+    pointer_a1, output_pointer1 = NAND(pointer_b1, data_a, output)
+
+    # Set the values for the first NAND
+    pointer_a1.set_value(1)
+    pointer_b1.set_value(1)
+
+    # Perform the multiplication process
+    output.value = data_a.value * data_b.value
+
+    assert output_pointer1.get_value() == 0, f'Expected 0 but got {output_pointer1.get_value()}'
+
+    data_c = data()
+    output2 = data()
+
+    # Build a NAND gate with output of first NAND and data_c
+    pointer_a2, output_pointer2 = NAND(output_pointer1, data_c, output2)
+
+    # Make a pointer we can set for data_c
+    pointer_c = data_c.generate_pointer()
+
+    # Set the value for data_c
+    pointer_c.set_value(1)
+
+    # Perform the multiplication process
+    output2.value = output.value * data_c.value
+
+    assert output_pointer2.get_value() == 1, f'Expected 1 but got {output_pointer2.get_value()}'
+
 if __name__ == "__main__":
     test_NAND_all()
     test_two_NANDS()
     test_three_NANDS()
+    test_NAND_into_NAND()
     print("All tests passed for logic_gate.py")
