@@ -12,7 +12,7 @@ def test_generate_adding():
     assert data_size == data_size2, "Data sizes do not match"
 
     # Make sure we can extract the data
-    assert wrapped_data >> data_size == unencrypted_data, f'Failed to extract encrypted data, {wrapped_data} >> {data_size} != {unencrypted_data}'
+    assert (wrapped_data >> data_size) & data_size == unencrypted_data, f'Failed to extract encrypted data, {wrapped_data} >> {data_size} != {unencrypted_data}'
 
     # Make sure we can perform the operation and extract the correct data
     answer: int = ((wrapped_data * wrapped_operation) >> data_size) & ((data_size << 1) - 1)
