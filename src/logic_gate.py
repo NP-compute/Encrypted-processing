@@ -11,7 +11,8 @@ class data:
     # records the data
     def __init__(self):
         self.value: int = 1
-        self.contaminated_pointer: int = 1 # This points to the highest bit that is contaminated
+        # NOTE: This was supposed to be 0, but it is crashing, may be a bug
+        self.contaminated_pointer: int = 2 # This points to the highest bit that is contaminated
 
     def set_bit(self, bit_position: int, bit_value: int):
         if bit_value not in (0, 1):
@@ -46,12 +47,12 @@ def UNITARY(pointer_b: pointer, data_a: data, output: data) -> pointer:
     """ Performs the unitary operation to make a pointer to the data in the output
 
     Args:
-        pointer_b (pointer): _description_
-        data_a (data): _description_
-        output (data): _description_
+        pointer_b (pointer): The value to save
+        data_a (data): The other dataset that is to be modified
+        output (data): The output data object
 
     Returns:
-        pointer: _description_
+        pointer: A pointer to the output data object that will have the same value as pointer_b after multiplication
     """
     # Perform the NAND operation
 
@@ -75,6 +76,42 @@ def UNITARY(pointer_b: pointer, data_a: data, output: data) -> pointer:
 
     return output_pointer
 
+def XOR(pointer_a1: pointer, pointer_a2: pointer, data_b: data, output: data) -> pointer:
+    """ Performs the xor operation
+
+    Args:
+        pointer_a1 (pointer): The first value to XOR
+        pointer_a2 (pointer): The second value to XOR
+        data_b (data): The other dataset that is to be modified
+        output (data): The output data object
+
+    Returns:
+        pointer: A pointer to the output data object that will have the same value as pointer_a XOR pointer_b after multiplication
+    """
+    
+    assert pointer_a1.data_pointer == pointer_a2.data_pointer, "Pointers must point to the same data object"
+    assert pointer_a1.data_pointer != data_b, "Pointers must point to different data objects"
+
+    # Set the lower pointer to 1 for the XOR operation
+    lower_pointer: pointer = data_b.generate_pointer()
+    lower_pointer.set_value(1)
+
+    # Set the upper pointer to 1 for the XOR operation
+    upper_pointer_int: int = abs(pointer_a1.position - pointer_a2.position) + lower_pointer.position
+    data_b.set_bit(upper_pointer_int, 1)
+    upper_pointer: pointer = pointer(upper_pointer_int, data_b)
+
+    # Add in the contaminated pointers
+    new_contaminated_pointer: int = lower_pointer.position + upper_pointer.position + 1
+    pointer_a1.data_pointer.contaminated_pointer = new_contaminated_pointer
+    data_b.contaminated_pointer = new_contaminated_pointer
+
+    # Make the output pointer
+    output_int: int = lower_pointer.position + max(pointer_a1.position, pointer_a2.position)
+    assert output_int == upper_pointer.position+min(pointer_a1.position, pointer_a2.position), "These should intersect"
+    output_pointer: pointer = pointer(output_int, output)
+
+    return output_pointer
 
 def NAND(pointer_b: pointer, data_a: data, output: data) -> tuple[pointer, pointer]:
     """ Performs the nand operation

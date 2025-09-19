@@ -1,4 +1,4 @@
-from src.logic_gate import data, pointer, NAND, UNITARY
+from src.logic_gate import data, pointer, NAND, UNITARY, XOR
 
 def test_NAND(x: int, y: int, expected: int):
     data_a = data()
@@ -167,10 +167,32 @@ def test_UNITARY():
 
     assert output_pointer3.get_value() == 1, f'3. Expected 1 but got {output_pointer3.get_value()} with the data values {data_d.value=}, {output2.value=}, and {output3.value=}'
 
+def test_XOR():
+    data_a = data()
+    data_b = data()
+    output = data()
+
+    # Make pointers we can set
+    pointer_a1 = data_a.generate_pointer()
+    pointer_a2 = data_a.generate_pointer()
+
+    # Set the values
+    pointer_a1.set_value(1)
+    pointer_a2.set_value(0)
+
+    # Perform the XOR operation
+    output_pointer = XOR(pointer_a1, pointer_a2, data_b, output)
+
+    # Perform the multiplication process
+    output.value = data_a.value * data_b.value
+
+    assert output_pointer.get_value() == 1, f'1. Expected 1 but got {output_pointer.get_value()} with the data values {data_a.value=}, {data_b.value=} and {output.value=}' 
+
 if __name__ == "__main__":
     test_NAND_all()
     test_two_NANDS()
     test_three_NANDS()
     test_NAND_into_NAND()
     test_UNITARY()
+    test_XOR()
     print("All tests passed for logic_gate.py")
