@@ -1,4 +1,4 @@
-from src.logic_gate import data, pointer, NAND
+from src.logic_gate import data, pointer, NAND, UNITARY
 
 def test_NAND(x: int, y: int, expected: int):
     data_a = data()
@@ -124,9 +124,53 @@ def test_NAND_into_NAND():
 
     assert output_pointer2.get_value() == 1, f'Expected 1 but got {output_pointer2.get_value()}'
 
+def test_UNITARY():
+    data_a = data()
+    data_b = data()
+    output = data()
+
+    # Make a pointer we can set
+    pointer_a = data_a.generate_pointer()
+
+    # Set the values
+    pointer_a.set_value(1)
+
+    # Perform the UNITARY operation to copy data from data_a to data_b
+    output_pointer = UNITARY(pointer_a, data_b, output)
+
+    # Perform the multiplication process
+    output.value = data_a.value * data_b.value
+
+    assert output_pointer.get_value() == 1, f'1. Expected 1 but got {output_pointer.get_value()} with the data values {data_a.value=}, {data_b.value=} and {output.value=}'
+
+    # NOTE: This is going through the process a few times to make sure the value is kept between clock cycles
+    output2 = data()
+    data_c = data()
+
+    # Perform the UNITARY operation to copy data from output to data_c
+    output_pointer2 = UNITARY(output_pointer, data_c, output2)
+
+    # Perform the multiplication process
+    output2.value = output.value * data_c.value
+
+    assert output_pointer2.get_value() == 1, f'2. Expected 1 but got {output_pointer2.get_value()} with the data values {data_c.value=}, {output.value=}, and {output2.value=}'
+
+    # NOTE: This is going through the process a few times to make sure the value is kept between clock cycles
+    output3 = data()
+    data_d = data()
+
+    # Perform the UNITARY operation to copy data from output2 to data_d
+    output_pointer3 = UNITARY(output_pointer2, data_d, output3)
+
+    # Perform the multiplication process
+    output3.value = output2.value * data_d.value
+
+    assert output_pointer3.get_value() == 1, f'3. Expected 1 but got {output_pointer3.get_value()} with the data values {data_d.value=}, {output2.value=}, and {output3.value=}'
+
 if __name__ == "__main__":
     test_NAND_all()
     test_two_NANDS()
     test_three_NANDS()
     test_NAND_into_NAND()
+    test_UNITARY()
     print("All tests passed for logic_gate.py")

@@ -41,6 +41,40 @@ class pointer:
 
     def get_value(self) -> int:
         return get_bit(self.data_pointer.value, self.position)
+    
+def UNITARY(pointer_b: pointer, data_a: data, output: data) -> pointer:
+    """ Performs the unitary operation to make a pointer to the data in the output
+
+    Args:
+        pointer_b (pointer): _description_
+        data_a (data): _description_
+        output (data): _description_
+
+    Returns:
+        pointer: _description_
+    """
+    # Perform the NAND operation
+
+    data_b: data = pointer_b.data_pointer
+
+    # NOTE: To perform operations with the same data object there will need to be a unitary operation to load the data into another data object
+    assert pointer_b.data_pointer != data_a, "Pointers must point to different data objects"
+
+    # Update the contaminated pointers in the data
+    new_contaminated_pointer = pointer_b.data_pointer.get_len_contaminated() + data_a.get_len_contaminated()
+    pointer_b.data_pointer.contaminated_pointer = new_contaminated_pointer
+    data_a.contaminated_pointer = new_contaminated_pointer
+
+    # Make the new pointer a that is to be set to 1
+    pointer_a: pointer = data_a.generate_pointer()
+    pointer_a.set_value(1)
+
+    # Make the output pointer
+    output_int: int = pointer_a.position + pointer_b.position
+    output_pointer: pointer = pointer(output_int, output)
+
+    return output_pointer
+
 
 def NAND(pointer_b: pointer, data_a: data, output: data) -> tuple[pointer, pointer]:
     """ Performs the nand operation
