@@ -1,11 +1,15 @@
-from src.generate_data import generate_adding, decompose_adding_data
+from src.generate_data import generate_adding_data, generate_adding_constant, decompose_adding_data
 from src.rsa import encrypt_int, decrypt_int, multiply_encrypted
 
 def test_generate_adding():
     unencrypted_data = 3
     data_size = 3
     increment_value = 2
-    wrapped_data, wrapped_operation, data_pointer, data_size = generate_adding(unencrypted_data, data_size, increment_value)
+    wrapped_data, data_pointer, data_size = generate_adding_data(unencrypted_data, data_size)
+    wrapped_operation, data_pointer2, data_size2 = generate_adding_constant(increment_value, data_size)
+    
+    assert data_pointer == data_pointer2, "Data pointers do not match"
+    assert data_size == data_size2, "Data sizes do not match"
 
     # Make sure we can extract the data
     assert wrapped_data >> data_size == unencrypted_data, f'Failed to extract encrypted data, {wrapped_data} >> {data_size} != {unencrypted_data}'
@@ -19,7 +23,11 @@ def test_decompose_adding():
     unencrypted_data = 5
     data_size = 4
     increment_value = 3
-    wrapped_data, wrapped_operation, data_pointer, data_size = generate_adding(unencrypted_data, data_size, increment_value)
+    wrapped_data, data_pointer, data_size = generate_adding_data(unencrypted_data, data_size)
+    wrapped_operation, data_pointer2, data_size2 = generate_adding_constant(increment_value, data_size)
+    
+    assert data_pointer == data_pointer2, "Data pointers do not match"
+    assert data_size == data_size2, "Data sizes do not match"
 
     # Decompose the data
     decomposed_data = decompose_adding_data(wrapped_data, data_pointer, data_size)
@@ -37,7 +45,11 @@ def test_integration():
     unencrypted_data = 7
     data_size = 4
     increment_value = 5
-    wrapped_data, wrapped_operation, data_pointer, data_size = generate_adding(unencrypted_data, data_size, increment_value)
+    wrapped_data, data_pointer, data_size = generate_adding_data(unencrypted_data, data_size)
+    wrapped_operation, data_pointer2, data_size2 = generate_adding_constant(increment_value, data_size)
+    
+    assert data_pointer == data_pointer2, "Data pointers do not match"
+    assert data_size == data_size2, "Data sizes do not match"
 
     # Encrypt the data
     enc_data, key = encrypt_int(wrapped_data)

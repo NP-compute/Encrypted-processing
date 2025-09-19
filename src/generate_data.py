@@ -5,7 +5,7 @@
 # This allows encrypted processing
 
 # Generate ints to allow adding by 1
-def generate_adding(unencrypted_data: int, data_size: int, increment_value: int) -> tuple[int, int, int, int]:
+def generate_adding_data(unencrypted_data: int, data_size: int) -> tuple[int, int, int, int]:
     """
     This function generates an UNENCRYPTED int for the data to exist in along with the necessary pointers and sizes.
 
@@ -15,10 +15,9 @@ def generate_adding(unencrypted_data: int, data_size: int, increment_value: int)
         increment_value: The value to increment the data by
 
     Returns:
-        A tuple of (wrapped_data, wrapped_operation, data_pointer, data_size)
+        A tuple of (wrapped_data, data_pointer, data_size)
     """
 
-    assert increment_value < (1 << data_size) - 1 , "Increment value too large for data size"
     assert unencrypted_data < (1 << data_size) - 1 , "Data too large for data size"
     
     # This is the UNENCRTPED data wrapper
@@ -27,14 +26,32 @@ def generate_adding(unencrypted_data: int, data_size: int, increment_value: int)
     wrapped_data = wrapped_data << data_size
     wrapped_data += 1
 
-    # This is the UNENCRPTED operation
-    wrapped_operation: int = (increment_value << data_size) + 1
-
     # This is the pointer to the data
     # NOTE: This is zero indexed, I want to differentiate between size and pointer for later operations
     data_pointer: int = data_size
 
-    return wrapped_data, wrapped_operation, data_pointer, data_size
+    return wrapped_data, data_pointer, data_size
+
+def generate_adding_constant(increment_value: int, data_size: int) -> tuple[int, int, int, int]:
+    """
+    This function generates an UNENCRYPTED int for the operation to exist in along with the necessary pointers and sizes.
+    Args:
+        increment_value: The value to increment the data by
+        data_size: The size of the data in bits
+    Returns:
+        A tuple of (wrapped_operation, data_pointer, data_size)
+    """
+
+    assert increment_value < (1 << data_size) - 1 , "Increment value too large for data size"
+    
+    # This is the pointer to the data
+    # NOTE: This is zero indexed, I want to differentiate between size and pointer for later operations
+    data_pointer: int = data_size
+
+    # This is the UNENCRPTED operation
+    wrapped_operation: int = (increment_value << data_size) + 1
+
+    return wrapped_operation, data_pointer, data_size
 
 # Decompose the UNENCRYPTED int back into the original data
 def decompose_adding_data(wrapped_data: int, data_pointer: int, data_size: int) -> int:
