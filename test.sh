@@ -6,3 +6,4 @@ set -e
 python3 -m tst.test_rsa
 python3 -m tst.test_generate_data
 python3 -m tst.test_encrypted_data
+python3 -m tst.test_logic_gate
