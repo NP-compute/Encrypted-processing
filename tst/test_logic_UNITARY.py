@@ -23,4 +23,4 @@ def test_UNITARY():
 
 if __name__ == '__main__':
     test_UNITARY()
-    print("All tests passed.")
+    print("All UNITARY tests passed.")
