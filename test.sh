@@ -8,3 +8,4 @@ set -e
 # python3 -m tst.test_encrypted_data
 python3 -m tst.test_logic_UNITARY
 python3 -m tst.test_logic_AND
+python3 -m tst.test_logic_NOT

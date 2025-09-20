@@ -107,4 +107,27 @@ def AND(data_pointer_a: Pointer, data_pointer_b: Pointer, operation_wrapper:Data
     return Pointer(output_pointer_int, output_wrapper)
 
 def NOT(data_pointer_a: Pointer, operation_wrapper: Data, output_wrapper: Data) -> Pointer:
-    pass
+    
+    data_wrapper: Data = data_pointer_a.data_pointer
+    data_wrapper.add_buffer()
+    operation_wrapper.add_buffer()
+
+    # Set lower operation wrapper value to 1
+    operation_address_lower = operation_wrapper.get_contaminated_len()
+    operation_wrapper.set_bit(operation_address_lower, 1)
+
+    # Set upper operation wrapper value to 1
+    operation_address_upper = operation_address_lower + data_pointer_a.address
+    operation_wrapper.set_bit(operation_address_upper, 1)
+    operation_wrapper.set_contaminated_pointer(operation_address_upper)
+
+    # Calculate the contamination for all 3 Data wrappers
+    new_contamination_len: int = data_wrapper.get_contaminated_len() + operation_wrapper.get_contaminated_len()
+    output_wrapper.set_contaminated_len(new_contamination_len)
+    operation_wrapper.set_contaminated_len(new_contamination_len)
+    data_wrapper.set_contaminated_len(new_contamination_len)
+
+    # Return resulting pointer
+    output_pointer_int: int = operation_address_lower + data_pointer_a.address
+    assert output_pointer_int == operation_address_upper, "These should intersect at the same point"
+    return Pointer(output_pointer_int, output_wrapper)
