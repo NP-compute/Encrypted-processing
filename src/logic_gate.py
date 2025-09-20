@@ -1,9 +1,11 @@
+from src.constants import COMPUTE_SIZE, CONTAMINATION_SIZE
+
 class Data:
     # records the data
     def __init__(self):
         self.value: int = 1
         # NOTE: This pointer points to the MSB contaiminated bit
-        self.contaminated_pointer: int = 0
+        self.contaminated_pointer: int = COMPUTE_SIZE
 
     def set_bit(self, bit_position: int, bit_value: int):
         if bit_value not in (0, 1):
