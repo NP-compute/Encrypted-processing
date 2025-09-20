@@ -32,21 +32,27 @@ class Data:
     def set_contaminated_len(self, new_len: int):
         self.set_contaminated_pointer(new_len - 1)
 
-    def make_pointer(self, value: int) -> 'Pointer':
+    def make_pointer(self, value: int, total_buffer: int = 1) -> 'Pointer':
         assert value in (0, 1), f'must be 0 or 1 but got {value=}'
 
         # Add buffer to make sure there is no carry error
-        self.add_buffer()
+        self.add_buffer(total_buffer)
 
         address: int = self.get_contaminated_len()
         self.set_bit(address, value)
         self.set_contaminated_pointer(address)
+
+        # Add a buffer on the other side too
+        self.add_buffer(total_buffer)
 
         return Pointer(address, self)
     
     def add_buffer(self, buffer_size: int = 1):
         assert buffer_size > 0, "Buffer size must be positive"
         self.set_contaminated_pointer(self.get_contaminated_pointer() + buffer_size)
+
+    def contamination_ok(self) -> bool:
+        return (1 << self.get_contaminated_len()) > self.value
 
 class Pointer:
     def __init__(self, address: int, data_pointer: Data):
@@ -58,12 +64,21 @@ class Pointer:
 
     def get_value(self) -> int:
         return self.data_pointer.get_bit(self.address)
+    
+    def __str__(self):
+        return f'Pointer(address={self.address}, value={self.get_value()})'
+    
+# IMPORTANT TODO: Check if contamination occurs when the operations are multiplied together
 
-def UNITARY(data_pointer_a: Pointer, operation_wrapper: Data, output_wrapper: Data) -> Pointer:
+def UNITARY(data_pointer_a: Pointer, operation_wrapper: Data, output_wrapper: Data, buffer: int = 1) -> Pointer:
 
     data_wrapper: Data = data_pointer_a.data_pointer
-    data_wrapper.add_buffer()
-    operation_wrapper.add_buffer()
+    data_wrapper.add_buffer(buffer)
+    operation_wrapper.add_buffer(buffer)
+
+    assert data_wrapper.contamination_ok(), f'The contamination for data_wrapper is not ok'
+    assert operation_wrapper.contamination_ok(), f'The contamination for operation_wrapper is not ok'
+    assert output_wrapper.contamination_ok(), f'The contamination for output_wrapper is not ok'
 
     # Set operation wrapper value to 1
     operation_address = operation_wrapper.get_contaminated_len()
@@ -80,21 +95,37 @@ def UNITARY(data_pointer_a: Pointer, operation_wrapper: Data, output_wrapper: Da
     # Return resulting pointer
     return Pointer(operation_address + data_pointer_a.address, output_wrapper)
 
-def AND(data_pointer_a: Pointer, data_pointer_b: Pointer, operation_wrapper:Data, output_wrapper: Data) -> Pointer:
-    
+def AND(data_pointer_a: Pointer, data_pointer_b: Pointer, operation_wrapper:Data, output_wrapper: Data, buffer: int = 1) -> Pointer:
+
     data_wrapper: Data = data_pointer_a.data_pointer
     assert data_wrapper is data_pointer_b.data_pointer, "Data pointers must point to the same Data instance"
-    data_wrapper.add_buffer()
-    operation_wrapper.add_buffer()
+    data_wrapper.add_buffer(buffer)
+    operation_wrapper.add_buffer(buffer)
+
+    assert data_wrapper.contamination_ok(), f'The contamination for data_wrapper is not ok'
+    assert operation_wrapper.contamination_ok(), f'The contamination for operation_wrapper is not ok'
+    assert output_wrapper.contamination_ok(), f'The contamination for output_wrapper is not ok'
+
+    # Scale up the contaminations at the start
+    new_contamination_len_supreme: int = data_wrapper.get_contaminated_len() * operation_wrapper.get_contaminated_len()
+    data_wrapper.set_contaminated_len(new_contamination_len_supreme)
+    operation_wrapper.set_contaminated_len(new_contamination_len_supreme)
 
     # Set lower operation wrapper value to 1
     operation_address_lower = operation_wrapper.get_contaminated_len()
     operation_wrapper.set_bit(operation_address_lower, 1)
 
+    print(f'using the lower address {operation_address_lower} with value {operation_wrapper.get_bit(operation_address_lower)}')
+
     # Set upper operation wrapper value to 1
     operation_address_upper = operation_address_lower + abs(data_pointer_a.address - data_pointer_b.address)
     operation_wrapper.set_bit(operation_address_upper, 1)
     operation_wrapper.set_contaminated_pointer(operation_address_upper)
+
+    print(f'using the upper address {operation_address_upper} with value {operation_wrapper.get_bit(operation_address_upper)}')
+
+    # Check to make sure there is a small buffer between the two addresses
+    assert abs(data_pointer_a.address - data_pointer_b.address) > 1, "Data pointers must be at least 2 bits apart to avoid carry issues"
 
     # Calculate the contamination for all 3 Data wrappers
     new_contamination_len: int = data_wrapper.get_contaminated_len() + operation_wrapper.get_contaminated_len()
@@ -108,11 +139,15 @@ def AND(data_pointer_a: Pointer, data_pointer_b: Pointer, operation_wrapper:Data
     output_pointer_int += 1
     return Pointer(output_pointer_int, output_wrapper)
 
-def NOT(data_pointer_a: Pointer, operation_wrapper: Data, output_wrapper: Data) -> Pointer:
+def NOT(data_pointer_a: Pointer, operation_wrapper: Data, output_wrapper: Data, buffer: int = 1) -> Pointer:
     
     data_wrapper: Data = data_pointer_a.data_pointer
-    data_wrapper.add_buffer()
-    operation_wrapper.add_buffer()
+    data_wrapper.add_buffer(buffer)
+    operation_wrapper.add_buffer(buffer)
+
+    assert data_wrapper.contamination_ok(), f'The contamination for data_wrapper is not ok'
+    assert operation_wrapper.contamination_ok(), f'The contamination for operation_wrapper is not ok'
+    assert output_wrapper.contamination_ok(), f'The contamination for output_wrapper is not ok'
 
     # Set lower operation wrapper value to 1
     operation_address_lower = operation_wrapper.get_contaminated_len()
@@ -122,6 +157,9 @@ def NOT(data_pointer_a: Pointer, operation_wrapper: Data, output_wrapper: Data) 
     operation_address_upper = operation_address_lower + data_pointer_a.address
     operation_wrapper.set_bit(operation_address_upper, 1)
     operation_wrapper.set_contaminated_pointer(operation_address_upper)
+
+    # Check to make sure there is a small buffer between the two addresses
+    assert data_pointer_a.address > 0, "Data pointer must be at least 1 bit away from 0 to avoid carry issues"
 
     # Calculate the contamination for all 3 Data wrappers
     new_contamination_len: int = data_wrapper.get_contaminated_len() + operation_wrapper.get_contaminated_len()
