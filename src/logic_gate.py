@@ -1,17 +1,9 @@
-
-def get_bit(value: int, bit_position: int) -> int:
-    """Get the bit at the specified position."""
-    return (value >> bit_position) & 1
-
-# NOTE: This is for compilation, figure out a better way to do this
-class pointer:
-    pass
-
-class data:
+class Data:
     # records the data
     def __init__(self):
         self.value: int = 1
-        self.contaminated_pointer: int = 1 # This points to the highest bit that is contaminated
+        # NOTE: This pointer points to the MSB contaiminated bit
+        self.contaminated_pointer: int = 0
 
     def set_bit(self, bit_position: int, bit_value: int):
         if bit_value not in (0, 1):
@@ -21,92 +13,70 @@ class data:
         else:
             self.value &= ~(1 << bit_position)
 
-    def generate_pointer(self) -> pointer:
-        # Generate a pointer to the next uncontaminated bit
-        new_pointer = pointer(self.contaminated_pointer + 1, self)
-        self.contaminated_pointer += 1
-        return new_pointer
-    
-    def get_len_contaminated(self) -> int:
-        return self.contaminated_pointer + 1
+    def get_bit(self, bit_position: int) -> int:
+        """Get the bit at the specified position."""
+        return (self.value >> bit_position) & 1
 
-class pointer:
-    # records the position of the pointer
-    def __init__(self, position: int, data_pointer: data):
-        self.position = position
+    def get_contaminated_len(self) -> int:
+        return self.contaminated_pointer + 1
+    
+    def get_contaminated_pointer(self) -> int:
+        return self.contaminated_pointer
+    
+    def set_contaminated_pointer(self, new_pointer: int):
+        assert new_pointer >= self.contaminated_pointer
+        self.contaminated_pointer = new_pointer
+
+    def set_contaminated_len(self, new_len: int):
+        self.set_contaminated_pointer(new_len - 1)
+
+    def make_pointer(self, value: int) -> 'Pointer':
+        assert value in (0, 1), f'must be 0 or 1 but got {value=}'
+
+        address: int = self.get_contaminated_len()
+        self.set_bit(address, value)
+        self.set_contaminated_pointer(address)
+
+        return Pointer(address, self)
+    
+    def add_buffer(self, buffer_size: int = 1):
+        assert buffer_size > 0, "Buffer size must be positive"
+        self.set_contaminated_pointer(self.get_contaminated_pointer() + buffer_size)
+
+class Pointer:
+    def __init__(self, address: int, data_pointer: Data):
+        self.address = address
         self.data_pointer = data_pointer
 
     def set_value(self, value: int):
-        self.data_pointer.set_bit(self.position, value)
+        self.data_pointer.set_bit(self.address, value)
 
     def get_value(self) -> int:
-        return get_bit(self.data_pointer.value, self.position)
+        return self.data_pointer.get_bit(self.address)
+
+def UNITARY(data_pointer_a: Pointer, operation_wrapper: Data, output_wrapper: Data) -> Pointer:
+
+    data_wrapper: Data = data_pointer_a.data_pointer
+    data_wrapper.add_buffer()
+    operation_wrapper.add_buffer()
+
+    # Set operation wrapper value to 1
+    operation_address = operation_wrapper.get_contaminated_len()
+    operation_wrapper.set_bit(operation_address, 1)
+    operation_wrapper.set_contaminated_pointer(operation_address)
     
-def UNITARY(pointer_b: pointer, data_a: data, output: data) -> pointer:
-    """ Performs the unitary operation to make a pointer to the data in the output
+    # Calculate the contamination for all 3 Data wrappers
+    assert data_pointer_a.address <= data_pointer_a.data_pointer.get_contaminated_pointer(), "Data should be in the contaminated region for now"
+    new_contamination_len: int = data_wrapper.get_contaminated_len() + operation_wrapper.get_contaminated_len()
+    output_wrapper.set_contaminated_len(new_contamination_len)
+    operation_wrapper.set_contaminated_len(new_contamination_len)
+    data_wrapper.set_contaminated_len(new_contamination_len)
 
-    Args:
-        pointer_b (pointer): _description_
-        data_a (data): _description_
-        output (data): _description_
+    # Return resulting pointer
+    return Pointer(operation_address + data_pointer_a.address, output_wrapper)
 
-    Returns:
-        pointer: _description_
-    """
-    # Perform the NAND operation
+def AND(data_pointer_a: Pointer, data_pointer_b: Pointer, operation_wrapper:Data, output_wrapper: Data) -> Pointer:
+    pass
 
-    data_b: data = pointer_b.data_pointer
-
-    # NOTE: To perform operations with the same data object there will need to be a unitary operation to load the data into another data object
-    assert pointer_b.data_pointer != data_a, "Pointers must point to different data objects"
-
-    # Update the contaminated pointers in the data
-    new_contaminated_pointer = pointer_b.data_pointer.get_len_contaminated() + data_a.get_len_contaminated()
-    pointer_b.data_pointer.contaminated_pointer = new_contaminated_pointer
-    data_a.contaminated_pointer = new_contaminated_pointer
-
-    # Make the new pointer a that is to be set to 1
-    pointer_a: pointer = data_a.generate_pointer()
-    pointer_a.set_value(1)
-
-    # Make the output pointer
-    output_int: int = pointer_a.position + pointer_b.position
-    output_pointer: pointer = pointer(output_int, output)
-
-    return output_pointer
-
-
-def NAND(pointer_b: pointer, data_a: data, output: data) -> tuple[pointer, pointer]:
-    """ Performs the nand operation
-
-    Args:
-        pointer_b (pointer): _description_
-        data_a (data): _description_
-        output (data): _description_
-
-    Returns:
-        tuple[pointer, pointer]: (pointer the user can set in a, pointer to the result in output data object)
-    """
-    # Perform the NAND operation
-
-    data_b: data = pointer_b.data_pointer
-
-    # NOTE: To perform operations with the same data object there will need to be a unitary operation to load the data into another data object
-    assert pointer_b.data_pointer != data_a, "Pointers must point to different data objects"
-
-    # Update the contaminated pointers in the data
-    new_contaminated_pointer = pointer_b.data_pointer.get_len_contaminated() + 2 * data_a.get_len_contaminated()
-    pointer_b.data_pointer.contaminated_pointer = new_contaminated_pointer
-    data_a  .contaminated_pointer = new_contaminated_pointer
-
-    # Make the new pointer a that is to be set
-    pointer_a: pointer = data_a.generate_pointer()
-
-    # Set the value for the 1 for the computation of the NAND
-    output_int: int = pointer_a.position+pointer_b.position
-    data_b.set_bit(output_int, 1)
-
-    # Make the output pointer
-    output_pointer: pointer = pointer(output_int, output)
-
-    return (pointer_a, output_pointer)
+def NOT(data_pointer_a: Pointer, operation_wrapper: Data, output_wrapper: Data) -> Pointer:
+    pass
