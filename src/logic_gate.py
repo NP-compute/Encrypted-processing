@@ -1,3 +1,6 @@
+import random
+
+NUMBER_INITIAL_BITS = 256
 
 def get_bit(value: int, bit_position: int) -> int:
     """Get the bit at the specified position."""
@@ -9,11 +12,16 @@ class pointer:
 
 class data:
     # records the data
-    def __init__(self):
-        self.value: int = 1
-        self.contaminated_pointer: int = 1 # This points to the highest bit that is contaminated
+    # IMPORTANT TODO: Add in a way to track which bits have been contaminated
+    def __init__(self, value: int | None = None, allowed_initial_bits_start: int = 1, allowed_initial_bits_end: int = NUMBER_INITIAL_BITS - 1):
+        # This is the value stored in the data
+        self.value: int = 1 if value is None else value
 
-    def set_bit(self, bit_position: int, bit_value: int):
+        # This is the range of bits that can be used for initial pointers
+        self.allowed_initial_bits_start = allowed_initial_bits_start
+        self.allowed_initial_bits_end = allowed_initial_bits_end
+
+    def _set_bit(self, bit_position: int, bit_value: int):
         if bit_value not in (0, 1):
             raise ValueError("bit_value must be 0 or 1")
         if bit_value == 1:
@@ -21,14 +29,16 @@ class data:
         else:
             self.value &= ~(1 << bit_position)
 
-    def generate_pointer(self) -> pointer:
-        # Generate a pointer to the next uncontaminated bit
-        new_pointer = pointer(self.contaminated_pointer + 1, self)
-        self.contaminated_pointer += 1
-        return new_pointer
+    def generate_pointer(self, pointer_address: int | None = None) -> pointer:
+
+        # Set the pointer to a random value between allowed_initial_bits_start and allowed_initial_bits_end inclusive
+        if pointer_address is None:
+            pointer_address = random.randint(self.allowed_initial_bits_start, self.allowed_initial_bits_end)
+
+        return pointer(pointer_address, self)
     
-    def get_len_contaminated(self) -> int:
-        return self.contaminated_pointer + 1
+    def get_value(self):
+        return self.value
 
 class pointer:
     # records the position of the pointer
@@ -36,77 +46,37 @@ class pointer:
         self.position = position
         self.data_pointer = data_pointer
 
-    def set_value(self, value: int):
-        self.data_pointer.set_bit(self.position, value)
-
     def get_value(self) -> int:
         return get_bit(self.data_pointer.value, self.position)
     
-def UNITARY(pointer_b: pointer, data_a: data, output: data) -> pointer:
-    """ Performs the unitary operation to make a pointer to the data in the output
+    def set_value(self, bit_value: int):
+        self.data_pointer._set_bit(self.position, bit_value)
+    
+    def get_address(self) -> int:
+        return self.position
 
-    Args:
-        pointer_b (pointer): _description_
-        data_a (data): _description_
-        output (data): _description_
+def AND(a: pointer, b: pointer) -> pointer:
 
-    Returns:
-        pointer: _description_
-    """
-    # Perform the NAND operation
+    # Needs to add the pointer addresses to get the address of the new pointer
+    new_address = a.get_address() + b.get_address()
 
-    data_b: data = pointer_b.data_pointer
+    # Needs to multiply the values to get the value of the data
+    new_value = a.data_pointer.get_value() * b.data_pointer.get_value()
 
-    # NOTE: To perform operations with the same data object there will need to be a unitary operation to load the data into another data object
-    assert pointer_b.data_pointer != data_a, "Pointers must point to different data objects"
+    # Make data and pointer then return the pointer
+    new_data = data(new_value)
+    return new_data.generate_pointer(new_address)
 
-    # Update the contaminated pointers in the data
-    new_contaminated_pointer = pointer_b.data_pointer.get_len_contaminated() + data_a.get_len_contaminated()
-    pointer_b.data_pointer.contaminated_pointer = new_contaminated_pointer
-    data_a.contaminated_pointer = new_contaminated_pointer
+def NOT(a: pointer) -> pointer:
+    
+    # Needs to copy the pointer address to get the address of the new pointer
+    new_address = a.get_address()
 
-    # Make the new pointer a that is to be set to 1
-    pointer_a: pointer = data_a.generate_pointer()
-    pointer_a.set_value(1)
+    # Needs to multiply the value by a data with bit value 1 at address 0 and bit value 1 at the pointer address
+    temp_data: data = data(1)
+    temp_data._set_bit(new_address, 1)
+    new_value = a.data_pointer.get_value() * temp_data.get_value()
 
-    # Make the output pointer
-    output_int: int = pointer_a.position + pointer_b.position
-    output_pointer: pointer = pointer(output_int, output)
-
-    return output_pointer
-
-
-def NAND(pointer_b: pointer, data_a: data, output: data) -> tuple[pointer, pointer]:
-    """ Performs the nand operation
-
-    Args:
-        pointer_b (pointer): _description_
-        data_a (data): _description_
-        output (data): _description_
-
-    Returns:
-        tuple[pointer, pointer]: (pointer the user can set in a, pointer to the result in output data object)
-    """
-    # Perform the NAND operation
-
-    data_b: data = pointer_b.data_pointer
-
-    # NOTE: To perform operations with the same data object there will need to be a unitary operation to load the data into another data object
-    assert pointer_b.data_pointer != data_a, "Pointers must point to different data objects"
-
-    # Update the contaminated pointers in the data
-    new_contaminated_pointer = pointer_b.data_pointer.get_len_contaminated() + 2 * data_a.get_len_contaminated()
-    pointer_b.data_pointer.contaminated_pointer = new_contaminated_pointer
-    data_a  .contaminated_pointer = new_contaminated_pointer
-
-    # Make the new pointer a that is to be set
-    pointer_a: pointer = data_a.generate_pointer()
-
-    # Set the value for the 1 for the computation of the NAND
-    output_int: int = pointer_a.position+pointer_b.position
-    data_b.set_bit(output_int, 1)
-
-    # Make the output pointer
-    output_pointer: pointer = pointer(output_int, output)
-
-    return (pointer_a, output_pointer)
+    # Make data and pointer then return the pointer
+    new_data = data(new_value)
+    return new_data.generate_pointer(new_address)
