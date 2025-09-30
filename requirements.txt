@@ -32,6 +32,7 @@ examples-rclpy-minimal-service==0.19.5
 examples-rclpy-minimal-subscriber==0.19.5
 geometry-msgs==5.3.6
 image-geometry==4.1.0
+iniconfig==2.1.0
 interactive-markers==2.5.4
 laser-geometry==2.7.0
 launch==3.4.4
@@ -46,9 +47,14 @@ map-msgs==2.4.1
 message-filters==4.11.6
 nav-msgs==5.3.6
 osrf-pycommon==2.1.6
+packaging==25.0
 pcl-msgs==1.0.0
 pendulum-msgs==0.33.5
+pluggy==1.6.0
+portion==2.6.1
 pycryptodome==3.23.0
+Pygments==2.19.2
+pytest==8.4.2
 python-qt-binding==2.2.1
 qt-dotgraph==2.7.5
 qt-gui==2.7.5
@@ -118,6 +124,7 @@ sensor-msgs==5.3.6
 sensor-msgs-py==5.3.6
 service-msgs==2.0.2
 shape-msgs==5.3.6
+sortedcontainers==2.4.0
 sros2==0.13.3
 statistics-msgs==2.0.2
 std-msgs==5.3.6
